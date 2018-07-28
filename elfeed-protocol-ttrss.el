@@ -229,6 +229,34 @@ result JSON content by http request.  Return
                      (elfeed-feed-title feed-db) feed-title)))
     elfeed-protocol-ttrss-feeds))
 
+(defun elfeed-protocol-ttrss--get-category-name (host-url cat-id)
+  "Get the name of the category corresponding to CAT-ID for the ttrss protocol
+feed HOST-URL."
+  (let* ((proto-id (elfeed-protocol-ttrss-id host-url))
+         (categories (gethash proto-id elfeed-protocol-ttrss-categories)))
+    (unless categories
+      (elfeed-log
+       'error
+       "elfeed-protocol-ttrss: no categories initialized or set for host-url %s"
+       host-url))
+    (gethash cat-id categories)))
+
+(defun elfeed-protocol-ttrss--get-subfeed-category-id (host-url feed-id)
+  "Get sub feed cat_id for the ttrss protocol feed HOST-URL and FEED-ID."
+  (let* ((cat_id (catch 'found
+                (let* ((proto-id (elfeed-protocol-ttrss-id host-url))
+                       (feeds (gethash proto-id elfeed-protocol-ttrss-feeds))
+                       (length (length feeds)))
+                  (dotimes (i length)
+                    (let* ((feed (elt feeds i))
+                           (id (map-elt feed 'id))
+                           (cat_id (map-elt feed 'cat_id)))
+                      (when (eq id feed-id)
+                        (throw 'found cat_id))))))))
+  (unless cat_id
+    (elfeed-log 'error "elfeed-protocol-ttrss: no subfeed for feed id %s" feed-id))
+    cat_id))
+
 (defun elfeed-protocol-ttrss--get-subfeed-url (host-url feed-id)
   "Get sub feed url for the ttrss protocol feed HOST-URL and FEED-ID."
   (let* ((url (catch 'found
@@ -355,6 +383,11 @@ parsed entries."
                                                 (let ((tag (elt ttrss-tags i)))
                                                   (unless (string-empty-p tag)
                                                     (push (intern tag) fixtags)))))
+                                            (when elfeed-protocol-ttrss-categories-as-tags
+                                              (let* ((cat-id (elfeed-protocol-ttrss--get-subfeed-category-id host-url feed-id))
+                                                     (cat-name (elfeed-protocol-ttrss--get-category-name host-url cat-id))
+                                                     (cat-symbol (intern (downcase cat-name))))
+                                                (push cat-symbol fixtags)))
                                             fixtags))
                                     (db-entry (elfeed-entry--create
                                                :title (elfeed-cleanup title)
