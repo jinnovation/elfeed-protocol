@@ -121,8 +121,6 @@ Will eval rest BODY expressions at end."
          (elfeed-log 'error "elfeed-protocol-ttrss: %s" (map-elt content 'error))
        ,@body)))
 
-;; TODO:
-;; - create/update mapping between feeds and corresponding categories
 (defmacro elfeed-protocol-ttrss-fetch-prepare (host-url &rest body)
   "Ensure logged in and feed list updated before expressions.
 HOST-URL is the host name of Tiny Tiny RSS server.  And will eval rest
