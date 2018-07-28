@@ -40,6 +40,7 @@ then the published state in Tiny Tiny RSS will be synced, too."
   :group 'elfeed-protocol
   :type 'boolean)
 
+;; TODO: Make sure that this works when feed(s) don't have category.
 (defcustom elfeed-protocol-ttrss-categories-as-tags nil
   "For each headline, add the corresponding Tiny Tiny RSS feeds'
 categories as tags."
