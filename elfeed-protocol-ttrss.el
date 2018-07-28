@@ -40,6 +40,12 @@ then the published state in Tiny Tiny RSS will be synced, too."
   :group 'elfeed-protocol
   :type 'boolean)
 
+(defcustom elfeed-protocol-ttrss-categories-as-tags nil
+  "For each headline, add the corresponding Tiny Tiny RSS feeds'
+categories as tags."
+  :group 'elfeed-protocol
+  :type 'boolean)
+
 (defvar elfeed-protocol-ttrss-feeds (make-hash-table :test 'equal)
   "Feed list from Tiny Tiny RSS, will be filled before updating operation.")
 
