@@ -49,6 +49,9 @@ categories as tags."
 (defvar elfeed-protocol-ttrss-feeds (make-hash-table :test 'equal)
   "Feed list from Tiny Tiny RSS, will be filled before updating operation.")
 
+(defvar elfeed-protocol-ttrss-categories (make-hash-table :test 'equal)
+  "Category list from Tiny Tiny RSS< will be filled before updating operation.")
+
 (defconst elfeed-protocol-ttrss-api-base "/api/")
 (defconst elfeed-protocol-ttrss-api-status-ok 0)
 (defconst elfeed-protocol-ttrss-api-status-err 1)
@@ -118,6 +121,8 @@ Will eval rest BODY expressions at end."
          (elfeed-log 'error "elfeed-protocol-ttrss: %s" (map-elt content 'error))
        ,@body)))
 
+;; TODO:
+;; - create/update mapping between feeds and corresponding categories
 (defmacro elfeed-protocol-ttrss-fetch-prepare (host-url &rest body)
   "Ensure logged in and feed list updated before expressions.
 HOST-URL is the host name of Tiny Tiny RSS server.  And will eval rest
@@ -134,15 +139,24 @@ BODY expressions after login.  The success session id will saved to
                (elfeed-protocol-ttrss--login
                 ,host-url
                 (lambda ()
-                  (elfeed-protocol-ttrss--update-feed-list
+                  (elfeed-protocol-ttrss--update-all
                    ,host-url (lambda () ,@body))))
-             (elfeed-protocol-ttrss--update-feed-list
+
+             (elfeed-protocol-ttrss--update-all
               ,host-url (lambda () ,@body)))))
      (elfeed-protocol-ttrss--login
       ,host-url
       (lambda ()
-        (elfeed-protocol-ttrss--update-feed-list
-         ,host-url (lambda () ,@body))))))
+        (elfeed-protocol-ttrss--update-all ,host-url (lambda () ,@body))))))
+
+(defun elfeed-protocol-ttrss--update-all (host-url &optional callback)
+  "Update Tiny Tiny RSS server invariants lists. `HOST-URL' is
+the host name of the Tiny Tiny RSS server. Will call `CALLBACK'
+at end."
+  (progn
+    (elfeed-protocol-ttrss--update-feed-list host-url)
+    (elfeed-protocol-ttrss--update-categories host-url)
+    (when callback (funcall callback))))
 
 (defun elfeed-protocol-ttrss--login (host-url &optional callback)
   "Login remote Tiny Tiny RSS server.
@@ -160,6 +174,26 @@ server url, and will call CALLBACK after login."
     (elfeed-protocol-ttrss-with-fetch
       host-url "GET" data
       (setq elfeed-protocol-ttrss-sid (map-elt content 'session_id))
+      (when callback (funcall callback)))))
+
+(defun elfeed-protocol-ttrss--update-categories (host-url &optional callback)
+  "Update Tiny Tiny RSS server categories list. `HOST-URL' is the host name of
+the Tiny Tiny RSS server. Will call `CALLBACK' at end."
+  (let* ((proto-id (elfeed-protocol-ttrss-id host-url))
+         (data-list `(("op" . "getCategories")
+                      ("sid" . ,elfeed-protocol-ttrss-sid)))
+         (data (json-encode-alist data-list)))
+    (elfeed-protocol-ttrss-with-fetch
+      host-url "GET" data
+      (let ((category-res content)
+            (id-to-category (make-hash-table :test 'equal)))
+
+        (seq-do (lambda (category)
+                  (puthash (alist-get 'id category) (alist-get 'title category)
+                           id-to-category))
+                category-res)
+
+        (puthash proto-id id-to-category elfeed-protocol-ttrss-categories))
       (when callback (funcall callback)))))
 
 (defun elfeed-protocol-ttrss--update-feed-list (host-url &optional callback)
