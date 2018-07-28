@@ -50,7 +50,7 @@ categories as tags."
   "Feed list from Tiny Tiny RSS, will be filled before updating operation.")
 
 (defvar elfeed-protocol-ttrss-categories (make-hash-table :test 'equal)
-  "Category list from Tiny Tiny RSS< will be filled before updating operation.")
+  "Category list from Tiny Tiny RSS, will be filled before updating operation.")
 
 (defconst elfeed-protocol-ttrss-api-base "/api/")
 (defconst elfeed-protocol-ttrss-api-status-ok 0)
