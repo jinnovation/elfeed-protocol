@@ -10,6 +10,9 @@
 (defvar elfeed-protocol-ttrss-fixture-entries
   (concat elfeed-protocol-ttrss-fixture-dir "entries.json"))
 
+(defvar elfeed-protocol-ttrss-fixture-categories
+  (concat elfeed-protocol-ttrss-fixture-dir "categories.json"))
+
 (defvar elfeed-protocol-ttrss-fixture-no-feed-id-entries
   (concat elfeed-protocol-ttrss-fixture-dir "entries-no-feed-id.json"))
 
