@@ -61,6 +61,7 @@ categories as tags."
 (defconst elfeed-protocol-ttrss-api-feed-id-fresh -3)
 (defconst elfeed-protocol-ttrss-api-feed-id-all-articles -4)
 (defconst elfeed-protocol-ttrss-api-feed-id-archived 0)
+(defconst elfeed-protocol-ttrss-api-category-id-uncategorized 0)
 (defconst elfeed-protocol-ttrss-api-view-mode-all-articles "all_articles")
 (defconst elfeed-protocol-ttrss-api-view-mode-unread "unread")
 (defconst elfeed-protocol-ttrss-api-view-mode-adaptive "adaptive")
@@ -369,6 +370,8 @@ parsed entries."
                                                       ':json-false)))
                                     (published (not (eq (map-elt headline 'published)
                                                         ':json-false)))
+                                    (cat-id (elfeed-protocol-ttrss--get-subfeed-category-id host-url feed-id))
+                                    (categorized-p (not (eq cat-id elfeed-protocol-ttrss-api-category-id-uncategorized)))
 
                                     (namespace (elfeed-url-to-namespace feed-url))
                                     (full-id (cons namespace (elfeed-cleanup guid-hash)))
@@ -390,9 +393,8 @@ parsed entries."
                                                 (let ((tag (elt ttrss-tags i)))
                                                   (unless (string-empty-p tag)
                                                     (push (intern tag) fixtags)))))
-                                            (when elfeed-protocol-ttrss-categories-as-tags
-                                              (let* ((cat-id (elfeed-protocol-ttrss--get-subfeed-category-id host-url feed-id))
-                                                     (cat-name (elfeed-protocol-ttrss--get-category-name host-url cat-id))
+                                            (when (and elfeed-protocol-ttrss-categories-as-tags categorized-p)
+                                              (let* ((cat-name (elfeed-protocol-ttrss--get-category-name host-url cat-id))
                                                      (cat-symbol (intern (downcase cat-name))))
                                                 (push cat-symbol fixtags)))
                                             fixtags))
