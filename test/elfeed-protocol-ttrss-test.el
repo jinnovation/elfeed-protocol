@@ -110,3 +110,23 @@
                     (elfeed-entry-tags entry1)
                     '(star tag1 unread)))
            ))))))
+
+(ert-deftest elfeed-protocol-ttrss-parse-categories ()
+  (with-temp-buffer
+    (insert-file-contents elfeed-protocol-ttrss-fixture-categories)
+    (goto-char (point-min))
+    (with-elfeed-test
+      (let* ((proto-url "ttrss+https://user:pass@myhost.com:443")
+             (host-url (elfeed-protocol-url proto-url))
+             (proto-id (elfeed-protocol-ttrss-id host-url))
+             (elfeed-feeds (list proto-url))
+             (elfeed-protocol-ttrss-categories (elfeed-protocol-ttrss--parse-result
+                                                 (elfeed-protocol-ttrss--parse-categories
+                                                  host-url content)))
+             ;; TODO: Test id not found
+             (test-category0 (elfeed-protocol-ttrss--get-category-name host-url 23))
+             (test-category1 (elfeed-protocol-ttrss--get-category-name host-url 24)))
+
+        (should (string= test-category0 "title0"))
+        (should (string= test-category1 "title1"))))))
+

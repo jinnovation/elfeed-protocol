@@ -184,16 +184,24 @@ the Tiny Tiny RSS server. Will call `CALLBACK' at end."
          (data (json-encode-alist data-list)))
     (elfeed-protocol-ttrss-with-fetch
       host-url "GET" data
-      (let ((category-res content)
-            (id-to-category (make-hash-table :test 'equal)))
+      (elfeed-protocol-ttrss--parse-categories host-url content)
+      (when callback (funcall callback)))))
 
+(defun elfeed-protocol-ttrss--parse-categories (host-url content)
+  "Parse the categories JSON buffer and fill results to
+`elfeed-protocol-ttrss-categories'. HOST-URL is the host name of
+the Tiny Tiny RSS server. CONTENT is the result JSON content by
+http request .Return `elfeed-protocol-ttrss-categories'."
+  (let* ((proto-id (elfeed-protocol-ttrss-id host-url))
+         (category-res content)
+         (id-to-category (make-hash-table :test 'equal)))
         (seq-do (lambda (category)
                   (puthash (alist-get 'id category) (alist-get 'title category)
                            id-to-category))
                 category-res)
 
-        (puthash proto-id id-to-category elfeed-protocol-ttrss-categories))
-      (when callback (funcall callback)))))
+        (puthash proto-id id-to-category elfeed-protocol-ttrss-categories)
+        elfeed-protocol-ttrss-categories))
 
 (defun elfeed-protocol-ttrss--update-feed-list (host-url &optional callback)
   "Update Tiny Tiny RSS server feeds list.
